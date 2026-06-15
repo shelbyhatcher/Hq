@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendCatcher - SaaS Trend Dashboard Mockup</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Top Global Header -->
+    <header class="bg-slate-950 border-b border-slate-800 h-16 flex items-center justify-between px-6 z-10">
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                <i data-lucide="trending-up" class="w-6 h-6"></i>
+            </div>
+            <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">TrendCatcher</span>
+            <span class="bg-indigo-900 text-indigo-300 text-xs font-semibold px-2 py-0.5 rounded-full border border-indigo-700">PRO PLAN</span>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="hidden md:flex items-center bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 w-96">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 mr-2"></i>
+            <input type="text" placeholder="Search products, hashtags, subreddits..." class="bg-transparent text-sm text-slate-200 outline-none w-full placeholder-slate-500">
+        </div>
+
+        <!-- Profile / Notifications -->
+        <div class="flex items-center gap-4">
+            <!-- Scan Button -->
+            <button onclick="triggerQuickScan()" class="bg-slate-900 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-950 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+                <i data-lucide="zap" class="w-3.5 h-3.5"></i> Quick Scan
+            </button>
+
+            <!-- Notifications -->
+            <div class="relative cursor-pointer hover:bg-slate-800 p-2 rounded-full transition" onclick="toggleNotifications()">
+                <i data-lucide="bell" class="w-5 h-5 text-slate-300"></i>
+                <span class="absolute top-1.5 right-1.5 bg-rose-500 w-2 h-2 rounded-full"></span>
+                <!-- Dropdown -->
+                <div id="notification-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-4 text-xs z-50">
+                    <h4 class="font-bold text-slate-200 mb-2 pb-2 border-b border-slate-800 flex justify-between items-center">
+                        Recent Signals <span class="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded-full">3 Alerts</span>
+                    </h4>
+                    <div class="space-y-3">
+                        <div class="p-2 bg-slate-900 rounded-lg border-l-2 border-green-500">
+                            <span class="font-semibold text-slate-300">TikTok Trend Alert:</span>
+                            <p class="text-slate-400 mt-0.5">#SunsetLamp views spiked +210% in last 12 hours.</p>
+                            <span class="text-[10px] text-slate-500">10m ago</span>
+                        </div>
+                        <div class="p-2 bg-slate-900 rounded-lg border-l-2 border-indigo-500">
+                            <span class="font-semibold text-slate-300">Reddit Intent Spike:</span>
+                            <p class="text-slate-400 mt-0.5">r/amazonfinds post "Must Have Kitchen Gadget" hit 2.1k upvotes.</p>
+                            <span class="text-[10px] text-slate-500">1h ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="flex items-center gap-2 border-l border-slate-800 pl-4">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white shadow">
+                    ME
+                </div>
+                <div class="hidden lg:block text-left">
+                    <div class="text-xs font-semibold text-slate-200">Marketing Team</div>
+                    <div class="text-[10px] text-slate-500">admin@trendcatcher.io</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Body Content -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Sidebar Panel -->
+        <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between p-4 shrink-0 hidden md:flex">
+            <div class="space-y-6">
+                <!-- Navigation Links -->
+                <nav class="space-y-1">
+                    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-indigo-600/10 text-indigo-400 font-medium text-sm border-l-2 border-indigo-500">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview Dashboard
+                    </a>
+                    <a href="#" onclick="alert('Trend Explorer grid with advanced filtering by Category, Velocity & Date. (Full implementation in Phase 2)')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-900 font-medium text-sm transition">
+                        <i data-lucide="compass" class="w-4 h-4"></i> Trend Explorer
+                    </a>
+                    <a href="#" onclick="alert('Configure target keywords, tone adjustments, and article layout length templates. (Full implementation in Phase 3)')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-900 font-medium text-sm transition">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> AI Engine Settings
+                    </a>
+                    <a href="#" onclick="alert('Connect automatic publishing sync tools like Headless WordPress, Medium, or Shopify. (Full implementation in Phase 3)')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-900 font-medium text-sm transition">
+                        <i data-lucide="globe" class="w-4 h-4"></i> Niche Site Sync
+                    </a>
+                </nav>
+
+                <!-- Platform Connected Channels -->
+                <div>
+                    <h5 class="text-[10px] font-bold text-slate-500 tracking-wider uppercase px-3 mb-2">Monitor Channels</h5>
+                    <div class="space-y-1.5 px-3">
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span class="flex items-center gap-1.5"><i data-lucide="video" class="w-3.5 h-3.5 text-rose-400"></i> TikTok Scraper</span>
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span class="flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5 text-red-500"></i> Pinterest Scraper</span>
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span class="flex items-center gap-1.5"><i data-lucide="message-square" class="w-3.5 h-3.5 text-orange-400"></i> Reddit Parser</span>
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Account summary -->
+            <div class="p-3 bg-slate-900/50 rounded-xl border border-slate-800">
+                <div class="flex justify-between items-center text-xs mb-1.5">
+                    <span class="text-slate-400">Scrape API Usage</span>
+                    <span class="font-semibold">3.2k / 10k</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                    <div class="bg-indigo-500 h-1.5 rounded-full" style="width: 32%"></div>
+                </div>
+                <span class="text-[9px] text-slate-500 mt-2 block">Resets in 11 days</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Canvas -->
+        <main class="flex-1 flex flex-col overflow-y-auto bg-slate-900">
+            <!-- Inner Canvas Container -->
+            <div class="p-6 space-y-6 flex-1 flex flex-col justify-between">
+
+                <!-- Welcome Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                            Overview Dashboard
+                        </h1>
+                        <p class="text-xs text-slate-400">Live viral tracking indicators & AI affiliate generation workspace.</p>
+                    </div>
+                    <!-- Stats summary pills -->
+                    <div class="text-xs text-slate-400 flex items-center gap-2 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg shadow-sm">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span> Engine Active
+                        <span class="text-slate-600">|</span>
+                        <span>Latest Scan: <strong>Just Now</strong></span>
+                    </div>
+                </div>
+
+                <!-- KPI Cards Dashboard Row -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- KPI Card 1 -->
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-lg">
+                        <div>
+                            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Active Warnings</span>
+                            <span class="text-2xl font-extrabold text-white">14</span>
+                            <span class="text-[10px] text-emerald-400 flex items-center mt-0.5 gap-0.5"><i data-lucide="trending-up" class="w-3 h-3"></i> +3 this week</span>
+                        </div>
+                        <div class="bg-indigo-600/10 p-2.5 rounded-lg text-indigo-400">
+                            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                    <!-- KPI Card 2 -->
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-lg">
+                        <div>
+                            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Avg Velocity</span>
+                            <span class="text-2xl font-extrabold text-white">87.2%</span>
+                            <span class="text-[10px] text-slate-500 block mt-0.5">Across top trends</span>
+                        </div>
+                        <div class="bg-cyan-600/10 p-2.5 rounded-lg text-cyan-400">
+                            <i data-lucide="zap" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                    <!-- KPI Card 3 -->
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-lg">
+                        <div>
+                            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Avg PIR Sentiment</span>
+                            <span class="text-2xl font-extrabold text-white">84.1%</span>
+                            <span class="text-[10px] text-emerald-400 flex items-center mt-0.5 gap-0.5"><i data-lucide="trending-up" class="w-3 h-3"></i> Highly favorable</span>
+                        </div>
+                        <div class="bg-emerald-600/10 p-2.5 rounded-lg text-emerald-400">
+                            <i data-lucide="smile" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                    <!-- KPI Card 4 -->
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-lg">
+                        <div>
+                            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Campaign CTR</span>
+                            <span class="text-2xl font-extrabold text-white">4.8%</span>
+                            <span class="text-[10px] text-emerald-400 flex items-center mt-0.5 gap-0.5"><i data-lucide="trending-up" class="w-3 h-3"></i> +1.2% above avg</span>
+                        </div>
+                        <div class="bg-amber-600/10 p-2.5 rounded-lg text-amber-400">
+                            <i data-lucide="percent" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Layout Core Grid (Split View) -->
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-1">
+
+                    <!-- Left: Emerging Product List Board (7 columns) -->
+                    <section class="xl:col-span-7 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+                        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+                            <h3 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                                <i data-lucide="list" class="w-4 h-4 text-indigo-400"></i> Emerging Viral Products (Live Board)
+                            </h3>
+                            <span class="text-[10px] bg-indigo-500/10 text-indigo-400 font-semibold px-2 py-0.5 rounded border border-indigo-500/20">AUTO-UPDATES ON</span>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 bg-slate-900/30">
+                                        <th class="p-4">Product details</th>
+                                        <th class="p-4">Signals</th>
+                                        <th class="p-4">Velocity</th>
+                                        <th class="p-4">PIR</th>
+                                        <th class="p-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="product-list-body" class="divide-y divide-slate-900 text-xs">
+                                    <!-- Dynamic product rows populated below -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Right: Interactive Product & AI Copywriter Workspace (5 columns) -->
+                    <section class="xl:col-span-5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col" id="workspace-panel">
+                        <!-- Top header card populated dynamically -->
+                        <div class="p-4 bg-slate-900/40 border-b border-slate-800 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] text-indigo-400 font-bold tracking-wider uppercase block">Active Workspace</span>
+                                <h3 class="font-bold text-sm text-white" id="ws-product-title">Loading...</h3>
+                            </div>
+                            <span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2 py-0.5 rounded font-semibold" id="ws-product-category">Category</span>
+                        </div>
+
+                        <!-- Tabs Header selector -->
+                        <div class="bg-slate-900/10 border-b border-slate-800 flex text-xs font-semibold">
+                            <button id="tab-btn-signals" onclick="switchWorkspaceTab('signals')" class="flex-1 py-3 text-center border-b-2 border-indigo-500 text-indigo-400 flex items-center justify-center gap-1.5 transition">
+                                <i data-lucide="line-chart" class="w-3.5 h-3.5"></i> Signals Analytics
+                            </button>
+                            <button id="tab-btn-copywriter" onclick="switchWorkspaceTab('copywriter')" class="flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> AI Copywriter
+                            </button>
+                        </div>
+
+                        <!-- Workspace Main Display Box -->
+                        <div class="p-4 flex-1 overflow-y-auto space-y-4" style="max-height: 520px;">
+                            
+                            <!-- Tab Content: Signals Analytics -->
+                            <div id="tab-content-signals" class="space-y-4">
+                                <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Rolling 7-Day Velocity</span>
+                                        <span class="text-[10px] text-emerald-400 font-semibold" id="ws-trend-direction">Growth Curve</span>
+                                    </div>
+                                    
+                                    <!-- Dynamic Mini Line Chart SVG -->
+                                    <div class="h-32 w-full flex items-end relative overflow-hidden" id="ws-chart-container">
+                                        <!-- Animated SVG Line Chart -->
+                                    </div>
+                                </div>
+
+                                <!-- Comment sentiment list -->
+                                <div>
+                                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">High-Intent Comments Extracted</h4>
+                                    <div id="ws-comments-container" class="space-y-2">
+                                        <!-- Dynamic comment bubbles -->
+                                    </div>
+                                </div>
+
+                                <!-- Extracted Features List -->
+                                <div>
+                                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Extracted Key Features (AI Entity Parser)</h4>
+                                    <ul id="ws-features-container" class="space-y-1.5 list-disc pl-4 text-xs text-slate-300">
+                                        <!-- Dynamic bullets -->
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Tab Content: AI Copywriter -->
+                            <div id="tab-content-copywriter" class="hidden space-y-4">
+                                <!-- Selector for Content type -->
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="setCopywriterType('blog')" id="type-btn-blog" class="py-2 rounded-lg bg-indigo-600 text-white font-bold text-[10px] border border-indigo-500 transition">
+                                        Blog Review
+                                    </button>
+                                    <button onclick="setCopywriterType('script')" id="type-btn-script" class="py-2 rounded-lg bg-slate-900 text-slate-400 hover:bg-slate-800 font-bold text-[10px] border border-slate-800 transition">
+                                        Video Script
+                                    </button>
+                                    <button onclick="setCopywriterType('social')" id="type-btn-social" class="py-2 rounded-lg bg-slate-900 text-slate-400 hover:bg-slate-800 font-bold text-[10px] border border-slate-800 transition">
+                                        Social Pin
+                                    </button>
+                                </div>
+
+                                <!-- Keyword Optimization panel -->
+                                <div class="p-2.5 bg-slate-900/50 rounded-xl border border-slate-800 space-y-1">
+                                    <span class="text-[9px] text-slate-500 font-bold uppercase block">Target SEO Keywords Extracted</span>
+                                    <div class="flex flex-wrap gap-1" id="ws-keywords-container">
+                                        <!-- Dynamic keyword bubbles -->
+                                    </div>
+                                </div>
+
+                                <!-- Draft Textarea container -->
+                                <div class="relative">
+                                    <span class="absolute top-2 right-2 text-[9px] bg-indigo-900/40 text-indigo-300 px-1.5 py-0.5 rounded font-mono font-bold">DRAFT READY</span>
+                                    <textarea id="copywriter-editor" class="w-full h-72 bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 font-mono outline-none focus:border-indigo-500 resize-none overflow-y-auto leading-relaxed">Loading draft...</textarea>
+                                </div>
+
+                                <!-- Core Call to Actions -->
+                                <div class="grid grid-cols-2 gap-2 pt-2">
+                                    <button onclick="insertAffiliateLinks()" class="bg-slate-900 border border-slate-800 text-slate-200 hover:bg-slate-850 hover:text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition">
+                                        <i data-lucide="link" class="w-3.5 h-3.5 text-indigo-400"></i> Insert Affiliate Links
+                                    </button>
+                                    <button onclick="publishToBlog()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow transition">
+                                        <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i> Publish to Site
+                                    </button>
+                                </div>
+                                <button onclick="copyToClipboard()" class="w-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-850 text-[10px] font-semibold py-1.5 px-3 rounded-lg flex items-center justify-center gap-1 transition">
+                                    <i data-lucide="copy" class="w-3 h-3"></i> Copy raw markdown content to clipboard
+                                </button>
+                            </div>
+
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- Footer License Details -->
+                <footer class="text-center text-[10px] text-slate-500 pt-6 border-t border-slate-800">
+                    TrendCatcher Automated Intelligence Engine &copy; 2026. Configured on Port 3000 bound live.
+                </footer>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-banner" class="fixed bottom-6 right-6 bg-indigo-600 text-slate-100 px-4 py-3 rounded-xl shadow-2xl border border-indigo-400 text-xs font-semibold flex items-center gap-2 transform translate-y-24 opacity-0 transition duration-300 z-50">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400" id="toast-icon"></i>
+        <span id="toast-message">Workflow execution completed!</span>
+    </div>
+
+    <!-- Scripting for Interactive Sandbox prototype -->
+    <script>
+        // Mock DB Data for products
+        const mockProducts = [
+            {
+                id: "prod-001",
+                name: "Smart Galaxy Nebula Projector",
+                category: "Smart Home / Lighting",
+                price: "$49.99",
+                velocity: 94,
+                pir: 88,
+                status: "Emerging",
+                platforms: ["tiktok", "pinterest", "reddit"],
+                signals: {
+                    tiktok: "1.4M Views, +230% Growth",
+                    pinterest: "4.5k Pins, +110% Growth",
+                    reddit: "r/amazonfinds 1.8k upvotes"
+                },
+                keywords: ["galaxy nebula laser", "sky light app", "bedroom decor lighting", "christmas gift projector"],
+                features: [
+                    "App-controlled custom celestial projections",
+                    "Voice integration with Alexa & Google Assistant",
+                    "Dynamic ambient mode reactive to ambient sound/music",
+                    "Ultra-silent motor design for restful sleep schedules"
+                ],
+                comments: [
+                    { user: "decor_lover_22", text: "Oh my god I need this for my bedroom immediately! Where is the link?", platform: "tiktok" },
+                    { user: "curious_george", text: "Ordered mine yesterday on Amazon. Stoked for it to arrive!", platform: "reddit" },
+                    { user: "pinterest_mom", text: "This is beautiful. Added to my aesthetic lighting inspo board.", platform: "pinterest" }
+                ],
+                copy: {
+                    blog: `## Honest Review: The Smart Galaxy Nebula Projector You Keep Seeing on Socials
+
+If you have scrolled through TikTok or Pinterest recently, you have likely seen bedrooms transformed into breathtaking cosmic sanctuaries. The secret behind this gorgeous aesthetic is the **Smart Galaxy Nebula Projector**. Today we are breaking down why this smart decor is flying off virtual shelves.
+
+### Why It's Going Viral
+The projector uses micro-laser technology to cast rich, high-definition nebula clouds and stars across your ceiling. Unlike older, clunky light models, this is app-controlled, meaning you can custom mix colors, dim brightness, and adjust rotation speed directly from your phone.
+
+### Key Features Evaluated
+- **Vast Customization:** Access over 16 million colors through the smart companion app.
+- **Sound Reactivity:** Ambient music integration syncs cloud pulses to the rhythm of your songs.
+- **Voice Control Compatible:** Connects effortlessly to Alexa and Google Home.
+
+### Conclusion & Affiliate Link
+This viral product is a highly profitable niche to build affiliate campaigns on. Click below to secure the current discount:
+👉 [Get Yours From the Best Rated Vendor Here](https://amzn.to/3vE6mNP)`,
+                    script: `### TikTok/Reels Video Script - Galaxy Projector
+
+**[HOOK - 0:00 to 0:03]**
+*Visual:* Camera pans across a dark, completely boring bedroom. Suddenly, user clicks their fingers.
+*Audio / Voiceover:* "Stop scrolling unless you want to transform your room into a literal galaxy."
+
+**[BODY - 0:03 to 0:12]**
+*Visual:* Screen lights up with pulsing, gorgeous red and blue cosmic nebula waves on the ceiling. Show phone app changing color sliders.
+*Audio / Voiceover:* "This is the viral Galaxy Projector. It lets you customize 16 million colors from your phone, syncs to your music, and runs completely silent."
+
+**[CTA - 0:12 to 0:15]**
+*Visual:* Close-up of the tiny projector on a nightstand. Overlay text: "Link in bio for 40% off!"
+*Audio / Voiceover:* "Click the link in my bio to get yours before the sale ends today!"`,
+                    social: `📌 **Cosmic Bedroom Aesthetic Inspo**
+
+Unleash your inner stargazer with this smart app-controlled nebula projector. Perfect for movie nights, gamer rigs, or soothing sleep schedules. 🌌
+
+👉 Tap the pin to get yours for 40% off today! #bedroomgoals #roomaesthetic #amazonfinds #lightinginspo`
+                }
+            },
+            {
+                id: "prod-002",
+                name: "Levitating Floating Bonsai Pot",
+                category: "Home & Garden",
+                price: "$74.50",
+                velocity: 85,
+                pir: 79,
+                status: "Emerging",
+                platforms: ["pinterest", "reddit"],
+                signals: {
+                    tiktok: "0 views (Not trending)",
+                    pinterest: "12.1k Pins, +240% Growth",
+                    reddit: "r/mildlyinteresting 4.3k upvotes"
+                },
+                keywords: ["levitating bonsai", "floating design pot", "futuristic home decor", "magnetic suspension plant"],
+                features: [
+                    "Maglev magnetic levitation suspension technology",
+                    "360-degree rotation of standard houseplants",
+                    "Minimalist, clean Japanese zen-like aesthetic",
+                    "Integrated power adapter base for silent magnetic balance"
+                ],
+                comments: [
+                    { user: "garden_zen", text: "How does this magic work? Does it spin on its own? Sending this to my dad.", platform: "pinterest" },
+                    { user: "physics_nerd", text: "Incredibly cool application of magnetic induction levitation. Ordering.", platform: "reddit" }
+                ],
+                copy: {
+                    blog: `## Levitating Bonsai Tree Pot: Sci-Fi Tech Meets Zen Gardening
+
+The **Levitating Floating Bonsai Pot** is a gorgeous statement piece that utilizes electromagnetic suspension to hover and spin a real plant in mid-air. It's the ultimate conversation-starter.
+
+### Features breakdown
+- **360 Rotation:** Steady magnetic fields rotate the plant, maximizing exposure to sunlight.
+- **Futuristic Zen:** Minimalist oak base fits into modern living rooms and executive desk setups.
+
+👉 [Buy the Levitating Floating Bonsai Pot on Amazon](https://amzn.to/3vLevPlant)`,
+                    script: `### TikTok/Reels Video Script - Levitating Bonsai
+
+**[HOOK - 0:00 to 0:03]**
+*Visual:* Hand gently spins a floating plant pot mid-air with no wires.
+*Audio:* "This floating plant is straight out of the year 3000!"
+
+**[BODY - 0:03 to 0:12]**
+*Audio:* "It uses actual magnets to hover and rotate your plants 360 degrees so they get even sunlight. Perfect for bonsai or small succulents."
+
+**[CTA - 0:12 to 0:15]**
+*Visual:* Text on screen: "Check out the link in my bio for a massive discount!"`,
+                    social: `📌 **Levitating Plant Pot - Magnetic Levitation Decor**
+
+Bring your plants to life with this beautiful floating pot! 🌿 Hovering and spinning silently to add science-fiction elegance to any table.
+
+👉 Tap to shop directly from Amazon! #plantgoals #interiordesign #scienceart`
+                }
+            },
+            {
+                id: "prod-003",
+                name: "Sunset Atmosphere Projection Lamp",
+                category: "Aesthetic Room Decor",
+                price: "$19.99",
+                velocity: 72,
+                pir: 68,
+                status: "Viral",
+                platforms: ["tiktok", "pinterest"],
+                signals: {
+                    tiktok: "4.8M Views, +80% Growth",
+                    pinterest: "3.2k Pins, +40% Growth",
+                    reddit: "No active threads"
+                },
+                keywords: ["sunset projection lamp", "golden hour ring", "indie aesthetic room", "tiktok photo lighting"],
+                features: [
+                    "Warm orange sunset projection halo with adjustable angle",
+                    "180-degree rotating iron bracket head",
+                    "Anti-glare optical crystal lens for photorealistic glows",
+                    "USB powered with stable base plate construction"
+                ],
+                comments: [
+                    { user: "indie_vibes", text: "The glow on my face is literally photorealistic. Unbelievable for golden hour pics.", platform: "tiktok" },
+                    { user: "decor_pin", text: "Perfect accessory for cozy reading corners.", platform: "pinterest" }
+                ],
+                copy: {
+                    blog: `## Review: Sunset Projection Lamp (Golden Hour Photo Secret)
+
+If you have wondered how influencers get the perfect golden glow, the **Sunset Projection Lamp** is your answer. Casting a hyper-realistic warm sun ring, it turns blank white walls into artistic canvas.
+
+👉 [Claim Your Sunset Lamp Today](https://amzn.to/3vSunset)`,
+                    script: `### Video Script - Golden Hour Sunset Lamp
+
+**[HOOK]**
+"How to get the perfect sunset glow inside your room at any time of day."
+
+**[BODY]**
+"This small USB-powered lamp projects a flawless sunset circle. It rotates 180 degrees so you can angle it anywhere for portraits, backgrounds, or cozy reading."
+
+**[CTA]**
+"Get 50% off with the link in bio!"`,
+                    social: `📌 **Sunset projection lamp - Golden hour all day!**
+
+Instantly capture perfect aesthetic lighting in your bedroom or studio. ☀️
+
+👉 Tap link to shop on Amazon. #cozyvibes #aesthetic #sunsetlamp`
+                }
+            },
+            {
+                id: "prod-004",
+                name: "Retro Wooden Mechanical Keyboard",
+                category: "Workspace Tech",
+                price: "$129.00",
+                velocity: 61,
+                pir: 84,
+                status: "Emerging",
+                platforms: ["reddit", "tiktok"],
+                signals: {
+                    tiktok: "450k Views, +120% Growth",
+                    pinterest: "120 Pins, flat",
+                    reddit: "r/mechanicalkeyboards 6.2k upvotes"
+                },
+                keywords: ["retro wood keyboard", "tactile brown switch", "typewriter mechanical", "luxury desk setup"],
+                features: [
+                    "Solid walnut timber case frame construction",
+                    "Premium tactile brown key switches with click sounds",
+                    "Dual Bluetooth & USB-C wired connection support",
+                    "Custom typewriter styled round aluminum alloy keycaps"
+                ],
+                comments: [
+                    { user: "coder_dude", text: "That wood chassis sounds incredibly deep. Sounds like heavy rain. Buying it.", platform: "reddit" },
+                    { user: "keeb_obsessed", text: "The typewriter aesthetic is drop dead gorgeous.", platform: "tiktok" }
+                ],
+                copy: {
+                    blog: `## Retro Wooden Mechanical Keyboard: luxury Tactile typing
+
+The **Retro Wooden Mechanical Keyboard** bridges the luxury styling of traditional timber artisan design with premium modern brown switches. 
+
+👉 [Shop the Wooden Keyboard Here](https://amzn.to/3vKeyboard)`,
+                    script: `### Script - Wood Typewriter Keyboard
+
+"If you work at a desk, this walnut mechanical keyboard will change typing forever. Listen to that rain-like click sound."`,
+                    social: `📌 **Luxury Walnut Typewriter Mechanical Keyboard**
+
+Upgrade your workspace setup with artisan solid timber mechanical switches. 🪵
+
+👉 Link in pin to shop now! #desksetup #officeinspo #mechanicalkeyboard`
+                }
+            }
+        ];
+
+        let selectedProductId = "prod-001";
+        let activeCopyType = "blog";
+
+        // Initialize App
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            populateProductTable();
+            loadProductWorkspace(selectedProductId);
+        });
+
+        // Toggle notifications dropdown
+        function toggleNotifications() {
+            const dropdown = document.getElementById("notification-dropdown");
+            dropdown.classList.toggle("hidden");
+        }
+
+        // Trigger Quick Scan simulation
+        function triggerQuickScan() {
+            showToast("zap", "Launching background API scrapers... Refreshing social metrics!");
+        }
+
+        // Populate Table with product list
+        function populateProductTable() {
+            const tbody = document.getElementById("product-list-body");
+            tbody.innerHTML = "";
+
+            mockProducts.forEach(prod => {
+                const tr = document.createElement("tr");
+                tr.id = `row-${prod.id}`;
+                tr.className = `cursor-pointer hover:bg-slate-900/50 transition border-b border-slate-900 ${prod.id === selectedProductId ? 'bg-indigo-950/20' : ''}`;
+                tr.onclick = () => selectProduct(prod.id);
+
+                // Platforms Icons
+                let platformBadges = "";
+                if (prod.platforms.includes("tiktok")) platformBadges += `<span class="bg-rose-500/10 text-rose-400 p-1 rounded"><i data-lucide="video" class="w-3.5 h-3.5 inline"></i></span> `;
+                if (prod.platforms.includes("pinterest")) platformBadges += `<span class="bg-red-500/10 text-red-400 p-1 rounded"><i data-lucide="image" class="w-3.5 h-3.5 inline"></i></span> `;
+                if (prod.platforms.includes("reddit")) platformBadges += `<span class="bg-orange-500/10 text-orange-400 p-1 rounded"><i data-lucide="message-square" class="w-3.5 h-3.5 inline"></i></span> `;
+
+                // Velocity styling
+                let velocityColor = "bg-green-500";
+                if (prod.velocity > 85) velocityColor = "bg-orange-500";
+                if (prod.velocity > 90) velocityColor = "bg-rose-500";
+
+                tr.innerHTML = `
+                    <td class="p-4 flex items-center gap-3">
+                        <div class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-slate-500">
+                            <i data-lucide="package" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-slate-200 hover:text-indigo-400 transition">${prod.name}</div>
+                            <div class="text-[10px] text-slate-500">${prod.category} &bull; ${prod.price}</div>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex gap-1">${platformBadges}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-16 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="${velocityColor} h-1.5 rounded-full" style="width: ${prod.velocity}%"></div>
+                            </div>
+                            <span class="font-bold text-slate-300">${prod.velocity}%</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="font-semibold text-emerald-400">${prod.pir}%</span>
+                    </td>
+                    <td class="p-4 text-right">
+                        <button class="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 text-slate-300 hover:text-indigo-400 text-[10px] font-bold px-2.5 py-1 rounded transition">
+                            Draft Content
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // Selection handler
+        function selectProduct(id) {
+            // Unhighlight previous row
+            const prevRow = document.getElementById(`row-${selectedProductId}`);
+            if (prevRow) prevRow.classList.remove("bg-indigo-950/20");
+
+            selectedProductId = id;
+
+            // Highlight new row
+            const newRow = document.getElementById(`row-${selectedProductId}`);
+            if (newRow) newRow.classList.add("bg-indigo-950/20");
+
+            loadProductWorkspace(id);
+        }
+
+        // Populate Workspace details
+        function loadProductWorkspace(id) {
+            const prod = mockProducts.find(p => p.id === id);
+            if (!prod) return;
+
+            document.getElementById("ws-product-title").innerText = prod.name;
+            document.getElementById("ws-product-category").innerText = prod.category;
+
+            // Load Extracted Features
+            const featuresContainer = document.getElementById("ws-features-container");
+            featuresContainer.innerHTML = "";
+            prod.features.forEach(feat => {
+                const li = document.createElement("li");
+                li.innerText = feat;
+                featuresContainer.appendChild(li);
+            });
+
+            // Load comments sentiment
+            const commentsContainer = document.getElementById("ws-comments-container");
+            commentsContainer.innerHTML = "";
+            prod.comments.forEach(com => {
+                const div = document.createElement("div");
+                div.className = "p-2 bg-slate-900 rounded-xl border border-slate-800 text-[11px] leading-relaxed relative";
+                
+                let iconClass = "text-rose-400 bg-rose-500/10";
+                let platformIcon = "video";
+                if (com.platform === "pinterest") {
+                    iconClass = "text-red-400 bg-red-500/10";
+                    platformIcon = "image";
+                } else if (com.platform === "reddit") {
+                    iconClass = "text-orange-400 bg-orange-500/10";
+                    platformIcon = "message-square";
+                }
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <span class="${iconClass} p-0.5 rounded"><i data-lucide="${platformIcon}" class="w-3 h-3"></i></span>
+                        <span class="font-bold text-slate-400">@${com.user}</span>
+                        <span class="text-[9px] text-slate-500">Intent Detected</span>
+                    </div>
+                    <p class="text-slate-300 font-medium">"${com.text}"</p>
+                `;
+                commentsContainer.appendChild(div);
+            });
+
+            // Keywords panel
+            const keywordsContainer = document.getElementById("ws-keywords-container");
+            keywordsContainer.innerHTML = "";
+            prod.keywords.forEach(keyword => {
+                const span = document.createElement("span");
+                span.className = "text-[9px] bg-indigo-950/30 text-indigo-400 border border-indigo-500/20 font-mono px-2 py-0.5 rounded-full";
+                span.innerText = `#${keyword.replace(/\s+/g, '')}`;
+                keywordsContainer.appendChild(span);
+            });
+
+            // Draw Dynamic Chart
+            drawChart(prod.velocity);
+
+            // Populate current copy draft
+            updateCopywriterDraft();
+            lucide.createIcons();
+        }
+
+        // SVG Interactive Charting engine
+        function drawChart(val) {
+            const container = document.getElementById("ws-chart-container");
+            container.innerHTML = "";
+
+            // Create some random growing datapoints based on velocity
+            const pointsCount = 7;
+            const points = [];
+            let startVal = val - 35;
+            for(let i=0; i<pointsCount-1; i++) {
+                points.push(startVal + Math.floor(Math.random() * 8));
+                startVal = points[points.length-1];
+            }
+            points.push(val); // Always end on velocity score
+
+            // Map data to SVG points
+            const width = 400;
+            const height = 120;
+            const step = width / (pointsCount - 1);
+            let svgPoints = "";
+            let areaPoints = `0,${height} `;
+            
+            points.forEach((p, idx) => {
+                const x = idx * step;
+                const y = height - (p / 100 * (height - 20));
+                svgPoints += `${x},${y} `;
+                areaPoints += `${x},${y} `;
+            });
+            areaPoints += `${width},${height}`;
+
+            const svg = `
+                <svg viewBox="0 0 ${width} ${height}" class="w-full h-full overflow-visible">
+                    <defs>
+                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.3"/>
+                            <stop offset="100%" stop-color="#4f46e5" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Grid Lines -->
+                    <line x1="0" y1="40" x2="${width}" y2="40" stroke="#1e293b" stroke-dasharray="3,3" />
+                    <line x1="0" y1="80" x2="${width}" y2="80" stroke="#1e293b" stroke-dasharray="3,3" />
+                    
+                    <!-- Area Path -->
+                    <polygon points="${areaPoints}" fill="url(#chartGradient)" />
+                    <!-- Line Path -->
+                    <polyline points="${svgPoints}" fill="none" stroke="#6366f1" stroke-width="2.5" />
+                    <!-- Active Datapoint pulse -->
+                    <circle cx="${width}" cy="${height - (val/100*(height-20))}" r="4" fill="#6366f1" stroke="#312e81" stroke-width="2" />
+                </svg>
+            `;
+            container.innerHTML = svg;
+            document.getElementById("ws-trend-direction").innerHTML = `<i data-lucide="trending-up" class="w-3.5 h-3.5 inline text-emerald-400"></i> Skyrocketing (Day 7: ${val}%)`;
+        }
+
+        // Workspace Tab Switcher
+        function switchWorkspaceTab(tab) {
+            const btnSignals = document.getElementById("tab-btn-signals");
+            const btnCopywriter = document.getElementById("tab-btn-copywriter");
+            const tabContentSignals = document.getElementById("tab-content-signals");
+            const tabContentCopywriter = document.getElementById("tab-content-copywriter");
+
+            if (tab === "signals") {
+                btnSignals.className = "flex-1 py-3 text-center border-b-2 border-indigo-500 text-indigo-400 flex items-center justify-center gap-1.5 transition";
+                btnCopywriter.className = "flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition";
+                tabContentSignals.classList.remove("hidden");
+                tabContentCopywriter.classList.add("hidden");
+            } else {
+                btnSignals.className = "flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition";
+                btnCopywriter.className = "flex-1 py-3 text-center border-b-2 border-indigo-500 text-indigo-400 flex items-center justify-center gap-1.5 transition";
+                tabContentSignals.classList.add("hidden");
+                tabContentCopywriter.classList.remove("hidden");
+            }
+        }
+
+        // Set draft content layout
+        function setCopywriterType(type) {
+            activeCopyType = type;
+            const btnBlog = document.getElementById("type-btn-blog");
+            const btnScript = document.getElementById("type-btn-script");
+            const btnSocial = document.getElementById("type-btn-social");
+
+            // Reset buttons classes
+            [btnBlog, btnScript, btnSocial].forEach(b => {
+                b.className = "py-2 rounded-lg bg-slate-900 text-slate-400 hover:bg-slate-800 font-bold text-[10px] border border-slate-800 transition";
+            });
+
+            // Highlight selected
+            const selectedBtn = document.getElementById(`type-btn-${type}`);
+            selectedBtn.className = "py-2 rounded-lg bg-indigo-600 text-white font-bold text-[10px] border border-indigo-500 transition";
+
+            updateCopywriterDraft();
+        }
+
+        // Populate Draft content values
+        function updateCopywriterDraft() {
+            const prod = mockProducts.find(p => p.id === selectedProductId);
+            if (!prod) return;
+
+            const editor = document.getElementById("copywriter-editor");
+            if (activeCopyType === "blog") {
+                editor.value = prod.copy.blog;
+            } else if (activeCopyType === "script") {
+                editor.value = prod.copy.script;
+            } else {
+                editor.value = prod.copy.social;
+            }
+        }
+
+        // Action CTA: insert affiliate link helper
+        function insertAffiliateLinks() {
+            showToast("link", "Amazon Associate tag tag='trendcatcher-20' injected successfully!");
+        }
+
+        // Action CTA: Sync publication helper
+        function publishToBlog() {
+            showToast("upload-cloud", "Post synced & published successfully to connected WordPress Site!");
+        }
+
+        // Copy Clipboard helper
+        function copyToClipboard() {
+            const editor = document.getElementById("copywriter-editor");
+            navigator.clipboard.writeText(editor.value);
+            showToast("copy", "Draft content copied to clipboard!");
+        }
+
+        // Show Toast Notifications banner
+        function showToast(icon, msg) {
+            const toast = document.getElementById("toast-banner");
+            const toastMsg = document.getElementById("toast-message");
+            const toastIcon = document.getElementById("toast-icon");
+
+            toastMsg.innerText = msg;
+            toastIcon.setAttribute("data-lucide", icon);
+            lucide.createIcons();
+
+            toast.classList.remove("translate-y-24", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+
+            setTimeout(() => {
+                toast.classList.add("translate-y-24", "opacity-0");
+                toast.classList.remove("translate-y-0", "opacity-100");
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
