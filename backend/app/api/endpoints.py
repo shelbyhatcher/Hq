@@ -632,9 +632,10 @@ async def get_admin_dashboard():
         pass
         
     # Total revenue (SaaS MRR + Affiliate conversions)
-    saas_mrr = 5240.00
-    aff_revenue = 3850.50
-    total_revenue = saas_mrr + aff_revenue
+    # Our real MRR is $0 (zero sales) and real affiliate revenue is $0
+    saas_mrr = 0.00
+    aff_revenue = 0.00
+    total_revenue = 0.00
     
     # Daily, weekly, monthly web traffic logs
     traffic_logs = {

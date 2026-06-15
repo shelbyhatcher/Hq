@@ -402,7 +402,7 @@ export default function App() {
                   <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-lg">
                     <div>
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Revenue</span>
-                      <span className="text-2xl font-extrabold text-white">${adminData?.revenue?.total ? adminData.revenue.total.toLocaleString() : '9,090.50'}</span>
+                      <span className="text-2xl font-extrabold text-white">${adminData?.revenue?.total !== undefined ? adminData.revenue.total.toLocaleString() : '0.00'}</span>
                       <span className="text-[10px] text-emerald-400 flex items-center mt-0.5 gap-0.5"><TrendingUp className="w-3 h-3" /> Stripe Live Synced</span>
                     </div>
                     <div className="bg-indigo-600/10 p-2.5 rounded-lg text-indigo-400">
@@ -413,7 +413,7 @@ export default function App() {
                   <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-lg">
                     <div>
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">SaaS MRR Tiers</span>
-                      <span className="text-2xl font-extrabold text-white">${adminData?.revenue?.saas_mrr ? adminData.revenue.saas_mrr.toLocaleString() : '5,240.00'}</span>
+                      <span className="text-2xl font-extrabold text-white">${adminData?.revenue?.saas_mrr !== undefined ? adminData.revenue.saas_mrr.toLocaleString() : '0.00'}</span>
                       <span className="text-[10px] text-slate-500 block mt-0.5">Basic + Pro subscriptions</span>
                     </div>
                     <div className="bg-cyan-600/10 p-2.5 rounded-lg text-cyan-400">
@@ -424,7 +424,7 @@ export default function App() {
                   <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-lg">
                     <div>
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Affiliate Income</span>
-                      <span className="text-2xl font-extrabold text-white">${adminData?.revenue?.affiliate ? adminData.revenue.affiliate.toLocaleString() : '3,850.50'}</span>
+                      <span className="text-2xl font-extrabold text-white">${adminData?.revenue?.affiliate !== undefined ? adminData.revenue.affiliate.toLocaleString() : '0.00'}</span>
                       <span className="text-[10px] text-emerald-400 flex items-center mt-0.5 gap-0.5"><TrendingUp className="w-3 h-3" /> Amazon / ShareASale</span>
                     </div>
                     <div className="bg-emerald-600/10 p-2.5 rounded-lg text-emerald-400">
