@@ -682,58 +682,86 @@ export default function App() {
     </div>
   );
 
-  const renderSubscription = () => (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2"><CreditCard className="w-6 h-6 text-indigo-400" /> Subscription</h1>
-          <p className="text-sm text-slate-400 mt-2">Placeholder subscription tab. Live checkout links are intentionally not embedded yet.</p>
+  const renderSubscription = () => {
+    const STRIPE_LINKS: Record<string, string> = {
+      basic: 'https://buy.stripe.com/28EcN760Q44G22sffhbZe08',
+      pro: 'https://buy.stripe.com/fZu6oJblaat422s1orbZe09'
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+              <CreditCard className="w-6 h-6 text-indigo-400" /> Subscription
+            </h1>
+            <p className="text-sm text-slate-400 mt-2">Manage your subscription plan.</p>
+          </div>
+          <span className={`px-3 py-2 rounded-xl border text-sm font-semibold self-start ${tierBadgeColor(currentUser?.tier ?? 'free')}`}>
+            Current tier: {(currentUser?.tier ?? 'free').toUpperCase()}
+          </span>
         </div>
-        <span className={`px-3 py-2 rounded-xl border text-sm font-semibold self-start ${tierBadgeColor(currentUser?.tier ?? 'free')}`}>
-          Current tier: {(currentUser?.tier ?? 'free').toUpperCase()}
-        </span>
-      </div>
 
-      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-sm text-slate-300 leading-relaxed">
-        {subscriptionData?.message ?? 'Checkout links will be added here later. The app only reads the database tier flag and does not call Stripe directly.'}
-      </div>
+        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-sm text-slate-300 leading-relaxed">
+          {subscriptionData?.message ?? 'Upgrade to unlock premium trends.'}
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {(subscriptionData?.plans ?? []).map((plan) => (
-          <section key={plan.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{plan.name}</p>
-                <h2 className="text-3xl font-bold text-white mt-2">${plan.price_monthly}<span className="text-base text-slate-400">/mo</span></h2>
-                <p className="text-sm text-slate-400 mt-2">{plan.description}</p>
-              </div>
-              {plan.id === 'pro' && <Crown className="w-8 h-8 text-amber-300" />}
-            </div>
-            <ul className="space-y-2 mt-5 text-sm text-slate-300 list-disc pl-5">
-              {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
-            </ul>
-            <button
-              disabled
-              className="mt-6 w-full bg-slate-900 border border-slate-800 text-slate-400 py-3 rounded-xl cursor-not-allowed"
-            >
-              Checkout link placeholder
-            </button>
-          </section>
-        ))}
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {(subscriptionData?.plans ?? []).map((plan) => {
+            const checkoutUrl = STRIPE_LINKS[plan.id];
+            return (
+              <section key={plan.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{plan.name}</p>
+                      <h2 className="text-3xl font-bold text-white mt-2">${plan.price_monthly}<span className="text-base text-slate-400">/mo</span></h2>
+                      <p className="text-sm text-slate-400 mt-2">{plan.description}</p>
+                    </div>
+                    {plan.id === 'pro' && <Crown className="w-8 h-8 text-amber-300 flex-shrink-0" />}
+                  </div>
+                  <ul className="space-y-2 mt-5 text-sm text-slate-300 list-disc pl-5">
+                    {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  {currentUser?.tier === plan.id ? (
+                    <button
+                      disabled
+                      className="mt-6 w-full bg-slate-900 border border-slate-800 text-slate-500 py-3 rounded-xl font-semibold cursor-default text-center"
+                    >
+                      Current plan
+                    </button>
+                  ) : checkoutUrl ? (
+                    <a
+                      href={checkoutUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-6 block w-full bg-indigo-600 hover:bg-indigo-500 text-white text-center font-semibold py-3 rounded-xl transition duration-200"
+                    >
+                      Upgrade to {plan.name} — ${plan.price_monthly}/mo
+                    </a>
+                  ) : null}
+                </div>
+              </section>
+            );
+          })}
+        </div>
 
-      <section className="bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-2xl">
-        <h2 className="text-sm font-semibold text-white flex items-center gap-2"><Zap className="w-4 h-4 text-cyan-400" /> Implementation notes</h2>
-        <ul className="space-y-2 mt-4 text-sm text-slate-300 list-disc pl-5">
-          {(subscriptionData?.notes ?? [
-            'The app does not call Stripe directly.',
-            'Live checkout links will be added by the lead.',
-            'User access is gated by the database tier field.',
-          ]).map((note) => <li key={note}>{note}</li>)}
-        </ul>
-      </section>
-    </div>
-  );
+        <section className="bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+            <Zap className="w-4 h-4 text-cyan-400" /> Implementation notes
+          </h2>
+          <ul className="space-y-2 mt-4 text-sm text-slate-300 list-disc pl-5">
+            {(subscriptionData?.notes ?? [
+              'The app does not call Stripe directly.',
+              'User access is gated by the database tier field.',
+            ]).map((note) => <li key={note}>{note}</li>)}
+          </ul>
+        </section>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
