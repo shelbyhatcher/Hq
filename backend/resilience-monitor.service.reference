@@ -1,0 +1,23 @@
+[Unit]
+Description=TrendCatcher Resilience Monitor Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=agent-devops-engineer
+ExecStart=/usr/bin/python3 /home/agent-devops-engineer/Hq/backend/resilience_monitor.py
+Restart=always
+RestartSec=10
+WorkingDirectory=/home/agent-devops-engineer/Hq/backend
+
+# Required database environment variables for team-db to resolve path and auth (PLACEHOLDERS)
+# DO NOT COMMIT THE ACTUAL SECRET VALUES! Fill them in the active /etc/systemd/system/resilience-monitor.service on the host.
+Environment="TEAM_DB_PATH=YOUR_TEAM_DB_PATH_HERE"
+Environment="TEAM_DB_URL=YOUR_TEAM_DB_URL_HERE"
+Environment="TEAM_DB_AUTH_TOKEN=YOUR_TEAM_DB_AUTH_TOKEN_HERE"
+Environment="TEAM_DB_EVENTS_URL=YOUR_TEAM_DB_EVENTS_URL_HERE"
+Environment="TEAM_DB_EVENTS_TOKEN=YOUR_TEAM_DB_EVENTS_TOKEN_HERE"
+Environment="PATH=/home/agent-devops-engineer/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+[Install]
+WantedBy=multi-user.target
