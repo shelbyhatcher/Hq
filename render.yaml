@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: trendcatcher-saas
+    env: docker
+    plan: starter
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:////var/data/trendcatcher.db
+      - key: PORT
+        value: 3000
+      - key: AUTH_SECRET_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLAUDE_API_KEY
+        sync: false
+    disk:
+      name: trendcatcher-data
+      mountPath: /var/data
+      sizeGB: 1
