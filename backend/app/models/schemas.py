@@ -117,6 +117,7 @@ class SubscriptionPlan(BaseSchema):
     description: str
     features: List[str]
     checkout_status: str
+    checkout_url: Optional[str] = None
 
 
 class SubscriptionOverview(BaseSchema):
