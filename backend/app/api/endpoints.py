@@ -183,24 +183,80 @@ def is_paid_user(user: Optional[db_models.User]) -> bool:
     return bool(user and user.tier in {"basic", "pro"})
 
 
-def build_trend_feed(user: Optional[db_models.User], include_locked: bool) -> List[Dict[str, Any]]:
+def build_trend_feed(db: Session, user: Optional[db_models.User], include_locked: bool) -> List[Dict[str, Any]]:
     feed: List[Dict[str, Any]] = []
     paid = is_paid_user(user)
 
-    for trend in MOCK_TRENDS:
-        product_info = next((p for p in MOCK_PRODUCTS if p["id"] == trend["product_id"]), None)
-        if not product_info:
-            continue
-        locked = trend["access_level"] == "premium" and not paid
+    db_trends = db.query(db_models.Trend).all()
+    for trend in db_trends:
+        locked = trend.access_level == "premium" and not paid
         if locked and not include_locked:
             continue
 
-        item = trend.copy()
-        item["product"] = product_info
-        item["locked"] = locked
+        item = {
+            "id": trend.id,
+            "product_id": trend.product_id,
+            "velocity_score": trend.velocity_score,
+            "purchase_intent_ratio": trend.purchase_intent_ratio,
+            "status": trend.status,
+            "access_level": trend.access_level,
+            "scanned_at": trend.scanned_at,
+            "locked": locked,
+            "product": {
+                "id": trend.product.id,
+                "name": trend.product.name,
+                "description": trend.product.description,
+                "category": trend.product.category,
+                "estimated_price": trend.product.estimated_price,
+                "image_url": trend.product.image_url,
+                "created_at": trend.product.created_at,
+                "updated_at": trend.product.updated_at,
+            } if trend.product else None
+        }
         feed.append(item)
 
+    feed.sort(key=lambda x: x.get("scanned_at") or datetime.min, reverse=True)
     return feed
+
+
+def seed_database(db: Session):
+    try:
+        # Check if we have any products. If not, seed them.
+        if db.query(db_models.Product).count() == 0:
+            print("Database empty. Seeding initial products...")
+            for p in MOCK_PRODUCTS:
+                db_prod = db_models.Product(
+                    id=p["id"],
+                    name=p["name"],
+                    description=p.get("description"),
+                    category=p.get("category"),
+                    estimated_price=p.get("estimated_price"),
+                    image_url=p.get("image_url"),
+                    created_at=p.get("created_at") or datetime.utcnow(),
+                    updated_at=p.get("updated_at") or datetime.utcnow(),
+                )
+                db.add(db_prod)
+            db.commit()
+
+        # Check if we have any trends. If not, seed them.
+        if db.query(db_models.Trend).count() == 0:
+            print("Seeding initial trends...")
+            for t in MOCK_TRENDS:
+                db_trend = db_models.Trend(
+                    id=t["id"],
+                    product_id=t["product_id"],
+                    velocity_score=t["velocity_score"],
+                    purchase_intent_ratio=t.get("purchase_intent_ratio", 0.0),
+                    status=t["status"],
+                    access_level=t.get("access_level", "public"),
+                    scanned_at=t.get("scanned_at") or datetime.utcnow(),
+                )
+                db.add(db_trend)
+            db.commit()
+            print("Database seeding completed successfully.")
+    except Exception as e:
+        db.rollback()
+        print(f"Error seeding database: {e}")
 
 
 @router.get("/health", response_model=Dict[str, Any])
@@ -214,13 +270,13 @@ def health_check():
 
 
 @router.get("/products", response_model=List[schemas.Product])
-def get_products():
-    return MOCK_PRODUCTS
+def get_products(db: Session = Depends(get_db)):
+    return db.query(db_models.Product).all()
 
 
 @router.get("/products/{product_id}", response_model=schemas.Product)
-def get_product(product_id: str):
-    product = next((p for p in MOCK_PRODUCTS if p["id"] == product_id), None)
+def get_product(product_id: str, db: Session = Depends(get_db)):
+    product = db.query(db_models.Product).filter(db_models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
@@ -234,12 +290,12 @@ def get_trends(
     db: Session = Depends(get_db),
 ):
     user = get_user_from_request(db, authorization, token)
-    return build_trend_feed(user, include_locked)
+    return build_trend_feed(db, user, include_locked)
 
 
 @router.post("/content/generate", response_model=schemas.GeneratedContent)
-def generate_ai_content(product_id: str, content_type: str):
-    product = next((p for p in MOCK_PRODUCTS if p["id"] == product_id), None)
+def generate_ai_content(product_id: str, content_type: str, db: Session = Depends(get_db)):
+    product = db.query(db_models.Product).filter(db_models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -247,8 +303,8 @@ def generate_ai_content(product_id: str, content_type: str):
         "id": f"gc-{product_id[:4]}-{content_type[:3]}",
         "product_id": product_id,
         "content_type": content_type,
-        "title": f"The ultimate review on viral {product['name']}",
-        "body": f"Drafted content review body specifically tailored for {product['name']}. Highly converting, optimized for SEO.",
+        "title": f"The ultimate review on viral {product.name}",
+        "body": f"Drafted content review body specifically tailored for {product.name}. Highly converting, optimized for SEO.",
         "seo_keywords": "viral, early warnings, affiliate, shopify, amazonfinds",
         "affiliate_links": json.dumps({"amazon": f"https://amzn.to/mock-{product_id}"}),
         "status": "draft",

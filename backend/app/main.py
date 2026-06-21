@@ -1,4 +1,6 @@
 import os
+import asyncio
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,14 +8,41 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import endpoints
+from app.api.endpoints import seed_database
 from app.core.config import settings
-from app.core.db import Base, engine
+from app.core.db import Base, engine, SessionLocal
 from app.models import db_models  # noqa: F401
+from app.scheduler import run_scheduler_loop_async
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Seed database with initial products and trends
+    db = SessionLocal()
+    try:
+        seed_database(db)
+    except Exception as e:
+        print(f"Error seeding database on startup: {e}")
+    finally:
+        db.close()
+        
+    # 2. Start scheduler background task (Interval configured via environment variable)
+    interval = int(os.getenv("SCHEDULER_INTERVAL", "86400"))
+    scheduler_task = asyncio.create_task(run_scheduler_loop_async(interval))
+    
+    yield
+    
+    # Cleanup on shutdown
+    scheduler_task.cancel()
+    try:
+        await scheduler_task
+    except asyncio.CancelledError:
+        pass
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -62,13 +91,14 @@ else:
                         a { color: #6366f1; text-decoration: none; font-weight: bold; }
                         a:hover { text-decoration: underline; }
                         .container { max-width: 640px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; }
+                        .footer { margin-top: 20px; font-size: 0.875rem; color: #64748b; }
                         code { color: #cbd5e1; }
                     </style>
                 </head>
                 <body>
                     <div class="container">
                         <h1>TrendCatcher Backend</h1>
-                        <p>FastAPI is running successfully.</p>
+                        <p>FastAPI is running successfully with Background Autonomous Scheduler and SQLite seeding.</p>
                         <p>Open the API docs at <a href="/api/docs">/api/docs</a>.</p>
                         <p>The frontend bundle was not found at <code>frontend/dist</code> yet.</p>
                     </div>
