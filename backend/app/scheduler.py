@@ -5,6 +5,10 @@ import logging
 import random
 import asyncio
 from typing import List, Dict, Any
+from datetime import datetime
+
+from app.core.db import SessionLocal
+from app.models import db_models
 
 # Configure logging
 logging.basicConfig(
@@ -86,6 +90,48 @@ async def scan_and_evaluate_trends():
             pir_score = round(random.uniform(0.65, 0.95), 2)
             logger.info(f"PIR Sentiment Score for '{name}': {pir_score:.0%}")
             
+            # Write/Update result directly to persistent database
+            db = SessionLocal()
+            try:
+                # Find the product by name
+                db_prod = db.query(db_models.Product).filter(db_models.Product.name == name).first()
+                if not db_prod:
+                    db_prod = db_models.Product(
+                        name=name,
+                        category=category,
+                        description=f"Automated scan product: {name}",
+                        estimated_price=29.99
+                    )
+                    db.add(db_prod)
+                    db.commit()
+                    db.refresh(db_prod)
+
+                # Update or create Trend record
+                db_trend = db.query(db_models.Trend).filter(db_models.Trend.product_id == db_prod.id).first()
+                status = "emerging" if cvs_score >= 8.0 else "monitored"
+                if db_trend:
+                    db_trend.velocity_score = cvs_score
+                    db_trend.purchase_intent_ratio = pir_score
+                    db_trend.status = status
+                    db_trend.scanned_at = datetime.utcnow()
+                else:
+                    db_trend = db_models.Trend(
+                        product_id=db_prod.id,
+                        velocity_score=cvs_score,
+                        purchase_intent_ratio=pir_score,
+                        status=status,
+                        access_level="public",
+                        scanned_at=datetime.utcnow()
+                    )
+                    db.add(db_trend)
+                db.commit()
+                logger.info(f"Successfully persisted Trend data in DB for '{name}'")
+            except Exception as db_err:
+                db.rollback()
+                logger.error(f"Failed to save Trend data to DB for '{name}': {db_err}")
+            finally:
+                db.close()
+            
             # 4. Check against locked production thresholds (CVS >= 8.0, PIR >= 0.80)
             if cvs_score >= 8.0 and pir_score >= 0.80:
                 logger.info(f"🌟 EMERGING TREND CONFIRMED: '{name}' qualifies for automated auto-publishing!")
@@ -150,6 +196,22 @@ def run_scheduler_loop(interval_seconds: int = 86400):
             logger.error(f"Error in scheduler execution cycle: {str(e)}")
         logger.info(f"Sleeping for {interval_seconds} seconds until next cycle...")
         time.sleep(interval_seconds)
+
+async def run_scheduler_loop_async(interval_seconds: int = 86400):
+    """
+    Non-blocking async loop to run the scheduler inside FastAPI startup/lifespan context.
+    """
+    logger.info(f"Starting autonomous scheduler background async loop (Interval: {interval_seconds}s)...")
+    # Wait a short duration on startup to ensure FastAPI app is fully booted and listening
+    await asyncio.sleep(10)
+    while True:
+        try:
+            logger.info("Triggering periodic autonomous trend scan...")
+            await scan_and_evaluate_trends()
+        except Exception as e:
+            logger.error(f"Error in async scheduler execution cycle: {str(e)}")
+        logger.info(f"Sleeping for {interval_seconds} seconds until next async cycle...")
+        await asyncio.sleep(interval_seconds)
 
 if __name__ == "__main__":
     import sys
