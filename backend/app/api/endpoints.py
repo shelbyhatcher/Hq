@@ -557,8 +557,8 @@ def get_subscription_plans(
     user = get_user_from_request(db, authorization, token)
     return {
         "current_tier": user.tier if user else "free",
-        "checkout_mode": "placeholder",
-        "message": "Checkout links are managed outside the app. This tab is a placeholder until the lead wires the live Stripe payment links.",
+        "checkout_mode": "live",
+        "message": "Checkout is live. Upgrade buttons link out to the lead-managed Stripe payment links.",
         "plans": [
             {
                 "id": "basic",
@@ -570,7 +570,8 @@ def get_subscription_plans(
                     "5 trending products per day",
                     "Basic SEO content generation",
                 ],
-                "checkout_status": "coming-soon",
+                "checkout_status": "available",
+                "checkout_url": "https://buy.stripe.com/28EcN760Q44G22sffhbZe08",
             },
             {
                 "id": "pro",
@@ -582,13 +583,13 @@ def get_subscription_plans(
                     "Advanced affiliate + SEO content generation",
                     "Pinterest/Reddit automation templates",
                 ],
-                "checkout_status": "coming-soon",
+                "checkout_status": "available",
+                "checkout_url": "https://buy.stripe.com/fZu6oJblaat422s1orbZe09",
             },
         ],
         "notes": [
-            "The app does not call Stripe directly.",
+            "The app does not call Stripe directly; checkout uses lead-managed Stripe payment links.",
             "Tier access is controlled by the database user record.",
-            "Live checkout links will be added by the lead.",
         ],
     }
 
