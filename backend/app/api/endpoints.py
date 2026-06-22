@@ -1,7 +1,6 @@
 import json
 import os
 import re
-import subprocess
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -12,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.models import db_models, schemas
+from app.scheduler import scheduler_status
 from app.services.ai_analysis import AIAnalysisPipeline
 from app.services.ai_content_generator import AIContentGenerator
 from app.services.auth import create_access_token, decode_access_token, hash_password, verify_password
@@ -650,11 +650,13 @@ def get_subscription_plans(
     }
 
 
-def get_process_health() -> Dict[str, str]:
-    health = {
+def get_process_health() -> Dict[str, Any]:
+    health: Dict[str, Any] = {
         "saas_server": "green",
         "blog_server": "red",
         "scheduler_daemon": "red",
+        "scheduler_last_scan": None,
+        "scheduler_cycles": 0,
     }
 
     try:
@@ -666,11 +668,11 @@ def get_process_health() -> Dict[str, str]:
     except Exception:
         health["blog_server"] = "red"
 
-    try:
-        output = subprocess.check_output(["ps", "-ef"]).decode()
-        health["scheduler_daemon"] = "green" if "scheduler.py" in output else "red"
-    except Exception:
-        health["scheduler_daemon"] = "red"
+    # Check in-process async scheduler state (not a separate process)
+    if scheduler_status.get("running"):
+        health["scheduler_daemon"] = "green"
+        health["scheduler_last_scan"] = scheduler_status.get("last_scan_at")
+        health["scheduler_cycles"] = scheduler_status.get("cycles_completed", 0)
 
     return health
 
