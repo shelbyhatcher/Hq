@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, String, Float, ForeignKey, func
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, String, func
 from sqlalchemy.orm import relationship
 
 from app.core.db import Base
@@ -53,5 +53,21 @@ class Trend(Base):
     status = Column(String(50), nullable=False)
     access_level = Column(String(50), nullable=False, default="public")
     scanned_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Verified-live source provenance. Public feeds must filter to rows where
+    # live_source_verified is true and these fields identify a real fetched
+    # public source. Older seeded/simulated rows will have NULL here and remain
+    # withheld from /api/trends.
+    source_platform = Column(String(50), nullable=True, index=True)
+    source_external_id = Column(String(100), nullable=True, index=True)
+    source_url = Column(String(500), nullable=True)
+    source_subreddit = Column(String(100), nullable=True)
+    source_title = Column(String(500), nullable=True)
+    source_author = Column(String(100), nullable=True)
+    source_created_at = Column(DateTime(timezone=True), nullable=True)
+    source_collected_at = Column(DateTime(timezone=True), nullable=True)
+    source_ingest_method = Column(String(100), nullable=True)
+    live_source_verified = Column(Boolean, nullable=True, default=False)
+    provenance_json = Column(String, nullable=True)
 
     product = relationship("Product", back_populates="trends")
