@@ -48,6 +48,17 @@ interface TrendItem {
   access_level: TrendView;
   locked: boolean;
   scanned_at: string;
+  source_platform?: string;
+  source_external_id?: string;
+  source_url?: string;
+  source_subreddit?: string;
+  source_title?: string;
+  source_author?: string;
+  source_created_at?: string;
+  source_collected_at?: string;
+  source_ingest_method?: string;
+  live_source_verified?: boolean;
+  provenance?: Record<string, unknown>;
   product: ApiProduct;
 }
 
@@ -415,8 +426,12 @@ export default function App() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
             <div>
               <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Public feed preview</p>
-              <h2 className="text-2xl font-bold text-white mt-1">No verified live trend feed yet</h2>
-              <p className="text-sm text-slate-400 mt-2">TrendCatcher is live, but verified social-ingestion data is not connected yet. Seeded and simulated trend records are withheld instead of being shown as live.</p>
+              <h2 className="text-2xl font-bold text-white mt-1">{publicPreview.length ? 'Verified Reddit trend feed' : 'No verified live trend feed yet'}</h2>
+              <p className="text-sm text-slate-400 mt-2">
+                {publicPreview.length
+                  ? 'TrendCatcher is showing only rows fetched from Reddit public JSON with stored source provenance. Seeded and simulated trend records remain withheld.'
+                  : 'TrendCatcher is live, but the public preview stays empty until Reddit public JSON ingestion writes verified provenance rows. Seeded and simulated trend records are withheld instead of being shown as live.'}
+              </p>
             </div>
             <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-300">
               {hiddenPremiumCount} premium trends hidden
@@ -426,13 +441,13 @@ export default function App() {
           <div className="space-y-3">
             {publicPreview.length === 0 ? (
               <div className="border border-dashed border-slate-700 rounded-xl p-6 text-sm text-slate-400 leading-relaxed">
-                No verified live trends are available yet. The public preview will stay empty until real social signal ingestion is connected.
+                No verified live trends are available yet. The public preview will stay empty until Reddit public JSON ingestion writes rows with source provenance.
               </div>
             ) : publicPreview.map((trend) => (
               <div key={trend.id} className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
                 <div>
                   <h3 className="font-semibold text-white">{trend.product.name}</h3>
-                  <p className="text-sm text-slate-400">{trend.product.category} • ${(trend.product.estimated_price ?? 0).toFixed(2)}</p>
+                  <p className="text-sm text-slate-400">{trend.product.category} • Source: {trend.source_subreddit ? `r/${trend.source_subreddit}` : 'Reddit public JSON'}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-right text-sm">
                   <div>
@@ -539,10 +554,10 @@ export default function App() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2"><TrendingUp className="w-6 h-6 text-indigo-400" /> Trend explorer</h1>
-          <p className="text-sm text-slate-400 mt-2">Public vs Premium visibility is enforced by the signed-in user tier. No seeded or simulated trend records are shown as live.</p>
+          <p className="text-sm text-slate-400 mt-2">Public vs Premium visibility is enforced by the signed-in user tier. Only verified Reddit public JSON rows with provenance are shown as live.</p>
         </div>
         <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-300">
-          <Search className="w-4 h-4 text-slate-500" /> {trends.length} verified live trend records loaded
+          <Search className="w-4 h-4 text-slate-500" /> {trends.length} verified Reddit trend records loaded
         </div>
       </div>
 
@@ -573,7 +588,7 @@ export default function App() {
 
           <div className="divide-y divide-slate-900">
             {visibleTrends.length === 0 ? (
-              <div className="p-8 text-sm text-slate-400 leading-relaxed">No verified live trends available for this view yet. Seeded and simulated records are withheld until real ingestion is connected.</div>
+              <div className="p-8 text-sm text-slate-400 leading-relaxed">No verified Reddit public JSON trends available for this view yet. Seeded and simulated records remain withheld.</div>
             ) : (
               visibleTrends.map((trend) => (
                 <button
@@ -594,7 +609,7 @@ export default function App() {
                           </span>
                           {trend.locked && <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border bg-rose-500/10 text-rose-300 border-rose-500/20">Locked</span>}
                         </div>
-                        <p className="text-sm text-slate-400 mt-1">{trend.product.category} • ${(trend.product.estimated_price ?? 0).toFixed(2)}</p>
+                        <p className="text-sm text-slate-400 mt-1">{trend.product.category} • Source: {trend.source_subreddit ? `r/${trend.source_subreddit}` : 'Reddit public JSON'}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm lg:text-right">
@@ -627,6 +642,18 @@ export default function App() {
             <div className="p-4 space-y-4">
               <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
                 <p className="text-sm text-slate-300 leading-relaxed">{selectedTrend.product.description}</p>
+              </div>
+
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-sm">
+                <p className="text-[10px] uppercase tracking-wider text-emerald-300 font-bold">Verified source provenance</p>
+                <p className="text-emerald-50/90 mt-2">
+                  Reddit public JSON • {selectedTrend.source_subreddit ? `r/${selectedTrend.source_subreddit}` : 'source subreddit recorded'} • {selectedTrend.source_ingest_method ?? 'reddit_public_json'}
+                </p>
+                {selectedTrend.source_url && (
+                  <a href={selectedTrend.source_url} target="_blank" rel="noopener noreferrer" className="inline-block text-emerald-300 hover:text-emerald-200 mt-2">
+                    Open Reddit source
+                  </a>
+                )}
               </div>
 
               {selectedTrend.locked ? (

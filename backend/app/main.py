@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import endpoints
 from app.api.endpoints import seed_database
 from app.core.config import settings
-from app.core.db import Base, engine, SessionLocal
+from app.core.db import Base, engine, SessionLocal, ensure_runtime_schema
 from app.models import db_models  # noqa: F401
 from app.scheduler import run_scheduler_loop_async
 
@@ -54,6 +54,7 @@ app.add_middleware(
 )
 
 Base.metadata.create_all(bind=engine)
+ensure_runtime_schema()
 
 app.include_router(endpoints.router, prefix=settings.API_V1_STR)
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -63,6 +63,17 @@ class Trend(TrendBase):
     scanned_at: datetime
     locked: bool = False
     product: Optional[Product] = None
+    source_platform: Optional[str] = None
+    source_external_id: Optional[str] = None
+    source_url: Optional[str] = None
+    source_subreddit: Optional[str] = None
+    source_title: Optional[str] = None
+    source_author: Optional[str] = None
+    source_created_at: Optional[datetime] = None
+    source_collected_at: Optional[datetime] = None
+    source_ingest_method: Optional[str] = None
+    live_source_verified: bool = False
+    provenance: Optional[Dict[str, Any]] = None
 
 
 class GeneratedContentBase(BaseSchema):

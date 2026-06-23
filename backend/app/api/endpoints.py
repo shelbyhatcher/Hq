@@ -15,15 +15,15 @@ from app.scheduler import scheduler_status
 from app.services.ai_analysis import AIAnalysisPipeline
 from app.services.ai_content_generator import AIContentGenerator
 from app.services.auth import create_access_token, decode_access_token, hash_password, verify_password
+from app.services.reddit_ingest import (
+    MONITORED_SUBREDDITS,
+    RedditIngestService,
+    RedditIngestionError,
+    ingest_and_persist_subreddit,
+)
 from app.services.scoring_engine import TrendScoringEngine
 
 router = APIRouter()
-
-# Safety hotfix: this deployment does not yet have a verified live trend
-# provenance flag/source. Until that exists, never expose database trend rows
-# through the public feed because the current database may contain seeded or
-# scheduler-generated simulation rows from earlier builds.
-LIVE_TRENDS_AVAILABLE = False
 
 FREE_GEN_COUNTS: Dict[str, int] = {}
 
@@ -84,15 +84,53 @@ def is_paid_user(user: Optional[db_models.User]) -> bool:
     return bool(user and user.tier in {"basic", "pro"})
 
 
-def build_trend_feed(db: Session, user: Optional[db_models.User], include_locked: bool) -> List[Dict[str, Any]]:
-    if not LIVE_TRENDS_AVAILABLE:
-        return []
+def parse_trend_provenance(trend: db_models.Trend) -> Optional[Dict[str, Any]]:
+    if not trend.provenance_json:
+        return None
+    try:
+        return json.loads(trend.provenance_json)
+    except (TypeError, json.JSONDecodeError):
+        return None
 
+
+def has_verified_reddit_provenance(trend: db_models.Trend) -> bool:
+    provenance = parse_trend_provenance(trend)
+    return bool(
+        trend.live_source_verified
+        and trend.source_platform == "reddit"
+        and trend.source_ingest_method == "reddit_public_json"
+        and trend.source_external_id
+        and trend.source_url
+        and provenance
+        and provenance.get("source_platform") == "reddit"
+        and provenance.get("ingest_method") == "reddit_public_json"
+        and provenance.get("public_json_url")
+    )
+
+
+def build_trend_feed(db: Session, user: Optional[db_models.User], include_locked: bool) -> List[Dict[str, Any]]:
+    """Return only verified live Reddit trends.
+
+    Legacy seeded/simulated rows remain in the database in some deployments, but
+    they do not carry live_source_verified + reddit_public_json provenance and
+    are therefore never exposed through the public customer feed.
+    """
     feed: List[Dict[str, Any]] = []
     paid = is_paid_user(user)
 
-    db_trends = db.query(db_models.Trend).all()
+    db_trends = (
+        db.query(db_models.Trend)
+        .filter(
+            db_models.Trend.live_source_verified.is_(True),
+            db_models.Trend.source_platform == "reddit",
+            db_models.Trend.source_ingest_method == "reddit_public_json",
+        )
+        .all()
+    )
     for trend in db_trends:
+        if not has_verified_reddit_provenance(trend):
+            continue
+
         locked = trend.access_level == "premium" and not paid
         if locked and not include_locked:
             continue
@@ -106,6 +144,17 @@ def build_trend_feed(db: Session, user: Optional[db_models.User], include_locked
             "access_level": trend.access_level,
             "scanned_at": trend.scanned_at,
             "locked": locked,
+            "source_platform": trend.source_platform,
+            "source_external_id": trend.source_external_id,
+            "source_url": trend.source_url,
+            "source_subreddit": trend.source_subreddit,
+            "source_title": trend.source_title,
+            "source_author": trend.source_author,
+            "source_created_at": trend.source_created_at,
+            "source_collected_at": trend.source_collected_at,
+            "source_ingest_method": trend.source_ingest_method,
+            "live_source_verified": bool(trend.live_source_verified),
+            "provenance": parse_trend_provenance(trend),
             "product": {
                 "id": trend.product.id,
                 "name": trend.product.name,
@@ -216,8 +265,79 @@ async def ingest_pinterest_product_pins(product_name: str, count: int = 5):
 
 
 @router.get("/reddit/posts/{subreddit_name}", response_model=List[Dict[str, Any]])
-async def ingest_reddit_subreddit(subreddit_name: str, limit: int = 10):
-    raise_live_ingestion_unavailable("Reddit subreddit")
+async def get_reddit_subreddit_posts(subreddit_name: str, limit: int = 10, sort: str = "rising"):
+    service = RedditIngestService()
+    try:
+        return await service.ingest_subreddit_posts(subreddit_name, limit=limit, sort=sort)
+    except RedditIngestionError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@router.post("/reddit/ingest/{subreddit_name}", response_model=Dict[str, Any])
+async def ingest_reddit_subreddit_trends(
+    subreddit_name: str,
+    limit: int = 10,
+    sort: str = "rising",
+    db: Session = Depends(get_db),
+):
+    try:
+        result = await ingest_and_persist_subreddit(db, subreddit_name, limit=limit, sort=sort)
+        return {
+            "status": "ok",
+            "message": "Verified Reddit public JSON ingestion completed. Only fetched posts with provenance were written.",
+            "result": result.as_dict(),
+        }
+    except RedditIngestionError as exc:
+        db.rollback()
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@router.post("/reddit/ingest", response_model=Dict[str, Any])
+async def ingest_monitored_reddit_trends(
+    limit_per_subreddit: int = 10,
+    sort: str = "rising",
+    db: Session = Depends(get_db),
+):
+    results: List[Dict[str, Any]] = []
+    written_total = 0
+    updated_total = 0
+    fetched_total = 0
+    for subreddit_name in MONITORED_SUBREDDITS:
+        try:
+            result = await ingest_and_persist_subreddit(db, subreddit_name, limit=limit_per_subreddit, sort=sort)
+            result_dict = result.as_dict()
+            results.append(result_dict)
+            written_total += result.written_trends
+            updated_total += result.updated_trends
+            fetched_total += result.fetched_posts
+        except RedditIngestionError as exc:
+            db.rollback()
+            results.append({
+                "subreddit": subreddit_name,
+                "fetched_posts": 0,
+                "written_trends": 0,
+                "updated_trends": 0,
+                "skipped_posts": 0,
+                "errors": str(exc),
+            })
+
+    if fetched_total == 0:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "message": "No verified Reddit public JSON posts were fetched, so no live trend rows were written.",
+                "results": results,
+            },
+        )
+
+    return {
+        "status": "ok",
+        "message": "Verified Reddit public JSON ingestion completed for monitored subreddits.",
+        "written_trends": written_total,
+        "updated_trends": updated_total,
+        "fetched_posts": fetched_total,
+        "results": results,
+    }
 
 
 @router.get("/instagram/hashtag/{hashtag}", response_model=Dict[str, Any])
@@ -532,8 +652,9 @@ def get_process_health() -> Dict[str, Any]:
 
 
 @router.get("/admin/dashboard", response_model=Dict[str, Any])
-async def get_admin_dashboard():
+async def get_admin_dashboard(db: Session = Depends(get_db)):
     process_health = get_process_health()
+    verified_trend_count = len(build_trend_feed(db, user=None, include_locked=True))
 
     blog_stats: Dict[str, Any] = {"totalPosts": 0, "email": {"subscribers": 0}}
     subscribers_count = 0
@@ -588,7 +709,7 @@ async def get_admin_dashboard():
             "monthly": 0,
             "history": [],
         },
-        "trending_products_today": 0,
+        "trending_products_today": verified_trend_count,
         "content_status": {
             "published": blog_stats.get("totalPosts", 0),
             "scheduled": 0,
