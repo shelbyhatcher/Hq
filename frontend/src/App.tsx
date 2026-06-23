@@ -415,8 +415,8 @@ export default function App() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
             <div>
               <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Public feed preview</p>
-              <h2 className="text-2xl font-bold text-white mt-1">Validated sample trend board</h2>
-              <p className="text-sm text-slate-400 mt-2">This preview uses sample trend data for product development. Premium results stay locked until a paid tier is applied to your account record.</p>
+              <h2 className="text-2xl font-bold text-white mt-1">No verified live trend feed yet</h2>
+              <p className="text-sm text-slate-400 mt-2">TrendCatcher is live, but verified social-ingestion data is not connected yet. Seeded and simulated trend records are withheld instead of being shown as live.</p>
             </div>
             <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-300">
               {hiddenPremiumCount} premium trends hidden
@@ -424,7 +424,11 @@ export default function App() {
           </div>
 
           <div className="space-y-3">
-            {publicPreview.map((trend) => (
+            {publicPreview.length === 0 ? (
+              <div className="border border-dashed border-slate-700 rounded-xl p-6 text-sm text-slate-400 leading-relaxed">
+                No verified live trends are available yet. The public preview will stay empty until real social signal ingestion is connected.
+              </div>
+            ) : publicPreview.map((trend) => (
               <div key={trend.id} className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
                 <div>
                   <h3 className="font-semibold text-white">{trend.product.name}</h3>
@@ -535,10 +539,10 @@ export default function App() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2"><TrendingUp className="w-6 h-6 text-indigo-400" /> Trend explorer</h1>
-          <p className="text-sm text-slate-400 mt-2">Public vs Premium visibility is enforced by the signed-in user tier. This board uses validated sample data for the current build.</p>
+          <p className="text-sm text-slate-400 mt-2">Public vs Premium visibility is enforced by the signed-in user tier. No seeded or simulated trend records are shown as live.</p>
         </div>
         <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-300">
-          <Search className="w-4 h-4 text-slate-500" /> {trends.length} trend records loaded
+          <Search className="w-4 h-4 text-slate-500" /> {trends.length} verified live trend records loaded
         </div>
       </div>
 
@@ -569,7 +573,7 @@ export default function App() {
 
           <div className="divide-y divide-slate-900">
             {visibleTrends.length === 0 ? (
-              <div className="p-8 text-sm text-slate-400">No trends available for this view yet.</div>
+              <div className="p-8 text-sm text-slate-400 leading-relaxed">No verified live trends available for this view yet. Seeded and simulated records are withheld until real ingestion is connected.</div>
             ) : (
               visibleTrends.map((trend) => (
                 <button
