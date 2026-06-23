@@ -15,114 +15,15 @@ from app.scheduler import scheduler_status
 from app.services.ai_analysis import AIAnalysisPipeline
 from app.services.ai_content_generator import AIContentGenerator
 from app.services.auth import create_access_token, decode_access_token, hash_password, verify_password
-from app.services.instagram_ingest import InstagramIngestService
-from app.services.pinterest_ingest import PinterestIngestService
-from app.services.reddit_ingest import RedditIngestService
 from app.services.scoring_engine import TrendScoringEngine
-from app.services.tiktok_ingest import TikTokIngestService
 
 router = APIRouter()
 
-MOCK_PRODUCTS = [
-    {
-        "id": "prod-001",
-        "name": "Smart Galaxy Nebula Projector",
-        "description": "App-controlled room laser projector for ambient celestial bedroom styling.",
-        "category": "Smart Home / Lighting",
-        "estimated_price": 49.99,
-        "image_url": "https://example.com/projector.jpg",
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-    },
-    {
-        "id": "prod-002",
-        "name": "Levitating Floating Bonsai Pot",
-        "description": "Magnetic maglev plant pot rotating 360 degrees mid-air.",
-        "category": "Home & Garden",
-        "estimated_price": 74.50,
-        "image_url": "https://example.com/bonsai.jpg",
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-    },
-    {
-        "id": "prod-003",
-        "name": "Sunset Atmosphere Projection Lamp",
-        "description": "USB warm light projector lamp capturing photo-realistic golden hour glows.",
-        "category": "Aesthetic Room Decor",
-        "estimated_price": 19.99,
-        "image_url": "https://example.com/sunset.jpg",
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-    },
-    {
-        "id": "prod-004",
-        "name": "Retro Wooden Mechanical Keyboard",
-        "description": "Artisan solid walnut typewriter mechanical keyboard with brown tactile switches.",
-        "category": "Workspace Tech",
-        "estimated_price": 129.00,
-        "image_url": "https://example.com/keyboard.jpg",
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-    },
-    {
-        "id": "prod-005",
-        "name": "Self-Heating Smart Mug",
-        "description": "Rechargeable desk mug with app-based temperature control and spill-safe lid.",
-        "category": "Workspace Tech",
-        "estimated_price": 89.00,
-        "image_url": "https://example.com/mug.jpg",
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-    },
-]
-
-MOCK_TRENDS = [
-    {
-        "id": "tr-001",
-        "product_id": "prod-001",
-        "velocity_score": 94.2,
-        "purchase_intent_ratio": 0.88,
-        "status": "emerging",
-        "access_level": "public",
-        "scanned_at": datetime.utcnow(),
-    },
-    {
-        "id": "tr-002",
-        "product_id": "prod-002",
-        "velocity_score": 85.0,
-        "purchase_intent_ratio": 0.79,
-        "status": "emerging",
-        "access_level": "public",
-        "scanned_at": datetime.utcnow(),
-    },
-    {
-        "id": "tr-003",
-        "product_id": "prod-003",
-        "velocity_score": 72.5,
-        "purchase_intent_ratio": 0.68,
-        "status": "viral",
-        "access_level": "public",
-        "scanned_at": datetime.utcnow(),
-    },
-    {
-        "id": "tr-004",
-        "product_id": "prod-004",
-        "velocity_score": 61.0,
-        "purchase_intent_ratio": 0.84,
-        "status": "emerging",
-        "access_level": "premium",
-        "scanned_at": datetime.utcnow(),
-    },
-    {
-        "id": "tr-005",
-        "product_id": "prod-005",
-        "velocity_score": 66.8,
-        "purchase_intent_ratio": 0.81,
-        "status": "emerging",
-        "access_level": "premium",
-        "scanned_at": datetime.utcnow(),
-    },
-]
+# Safety hotfix: this deployment does not yet have a verified live trend
+# provenance flag/source. Until that exists, never expose database trend rows
+# through the public feed because the current database may contain seeded or
+# scheduler-generated simulation rows from earlier builds.
+LIVE_TRENDS_AVAILABLE = False
 
 FREE_GEN_COUNTS: Dict[str, int] = {}
 
@@ -184,6 +85,9 @@ def is_paid_user(user: Optional[db_models.User]) -> bool:
 
 
 def build_trend_feed(db: Session, user: Optional[db_models.User], include_locked: bool) -> List[Dict[str, Any]]:
+    if not LIVE_TRENDS_AVAILABLE:
+        return []
+
     feed: List[Dict[str, Any]] = []
     paid = is_paid_user(user)
 
@@ -220,43 +124,21 @@ def build_trend_feed(db: Session, user: Optional[db_models.User], include_locked
 
 
 def seed_database(db: Session):
-    try:
-        # Check if we have any products. If not, seed them.
-        if db.query(db_models.Product).count() == 0:
-            print("Database empty. Seeding initial products...")
-            for p in MOCK_PRODUCTS:
-                db_prod = db_models.Product(
-                    id=p["id"],
-                    name=p["name"],
-                    description=p.get("description"),
-                    category=p.get("category"),
-                    estimated_price=p.get("estimated_price"),
-                    image_url=p.get("image_url"),
-                    created_at=p.get("created_at") or datetime.utcnow(),
-                    updated_at=p.get("updated_at") or datetime.utcnow(),
-                )
-                db.add(db_prod)
-            db.commit()
+    # Emergency honesty hotfix: do not seed products/trends. Previous versions
+    # inserted mock rows on startup, which made the public trend API/UI look live
+    # even when no verified social-ingestion data existed. Keep startup harmless
+    # until real trend provenance is implemented.
+    print("Trend seed skipped: no verified live trend source is configured.")
 
-        # Check if we have any trends. If not, seed them.
-        if db.query(db_models.Trend).count() == 0:
-            print("Seeding initial trends...")
-            for t in MOCK_TRENDS:
-                db_trend = db_models.Trend(
-                    id=t["id"],
-                    product_id=t["product_id"],
-                    velocity_score=t["velocity_score"],
-                    purchase_intent_ratio=t.get("purchase_intent_ratio", 0.0),
-                    status=t["status"],
-                    access_level=t.get("access_level", "public"),
-                    scanned_at=t.get("scanned_at") or datetime.utcnow(),
-                )
-                db.add(db_trend)
-            db.commit()
-            print("Database seeding completed successfully.")
-    except Exception as e:
-        db.rollback()
-        print(f"Error seeding database: {e}")
+
+def raise_live_ingestion_unavailable(platform: str):
+    raise HTTPException(
+        status_code=503,
+        detail=(
+            f"{platform} live ingestion is not configured yet. "
+            "Simulated social-signal data is disabled for the public API."
+        ),
+    )
 
 
 @router.get("/health", response_model=Dict[str, Any])
@@ -315,65 +197,37 @@ def generate_ai_content(product_id: str, content_type: str, db: Session = Depend
 
 @router.get("/tiktok/hashtag/{hashtag}", response_model=Dict[str, Any])
 async def ingest_tiktok_hashtag(hashtag: str):
-    service = TikTokIngestService()
-    try:
-        return await service.scrape_hashtag_metadata(hashtag)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"TikTok ingestion failed: {exc}")
+    raise_live_ingestion_unavailable("TikTok hashtag")
 
 
 @router.get("/tiktok/videos/{product_name}", response_model=List[Dict[str, Any]])
 async def ingest_tiktok_product_videos(product_name: str, count: int = 5):
-    service = TikTokIngestService()
-    try:
-        return await service.ingest_tiktok_videos_for_product(product_name, count=count)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"TikTok product ingestion failed: {exc}")
+    raise_live_ingestion_unavailable("TikTok product video")
 
 
 @router.get("/pinterest/trends/{keyword}", response_model=Dict[str, Any])
 async def ingest_pinterest_trends(keyword: str):
-    service = PinterestIngestService()
-    try:
-        return await service.scrape_pinterest_trends(keyword)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Pinterest trends failed: {exc}")
+    raise_live_ingestion_unavailable("Pinterest trend")
 
 
 @router.get("/pinterest/pins/{product_name}", response_model=List[Dict[str, Any]])
 async def ingest_pinterest_product_pins(product_name: str, count: int = 5):
-    service = PinterestIngestService()
-    try:
-        return await service.ingest_pinterest_pins_for_product(product_name, count=count)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Pinterest product ingestion failed: {exc}")
+    raise_live_ingestion_unavailable("Pinterest product pin")
 
 
 @router.get("/reddit/posts/{subreddit_name}", response_model=List[Dict[str, Any]])
 async def ingest_reddit_subreddit(subreddit_name: str, limit: int = 10):
-    service = RedditIngestService()
-    try:
-        return await service.ingest_subreddit_posts(subreddit_name, limit=limit)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Reddit subreddit ingestion failed: {exc}")
+    raise_live_ingestion_unavailable("Reddit subreddit")
 
 
 @router.get("/instagram/hashtag/{hashtag}", response_model=Dict[str, Any])
 async def ingest_instagram_hashtag(hashtag: str):
-    service = InstagramIngestService()
-    try:
-        return await service.scrape_instagram_hashtag(hashtag)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Instagram hashtag failed: {exc}")
+    raise_live_ingestion_unavailable("Instagram hashtag")
 
 
 @router.get("/instagram/reels/{product_name}", response_model=List[Dict[str, Any]])
 async def ingest_instagram_product_reels(product_name: str, count: int = 5):
-    service = InstagramIngestService()
-    try:
-        return await service.ingest_instagram_reels_for_product(product_name, count=count)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Instagram product Reels failed: {exc}")
+    raise_live_ingestion_unavailable("Instagram product Reels")
 
 
 @router.post("/trends/score", response_model=Dict[str, Any])

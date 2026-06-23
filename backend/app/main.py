@@ -98,7 +98,7 @@ else:
                 <body>
                     <div class="container">
                         <h1>TrendCatcher Backend</h1>
-                        <p>FastAPI is running successfully with Background Autonomous Scheduler and SQLite seeding.</p>
+                        <p>FastAPI is running successfully. The trend feed is in honest no-live-trends mode until verified social ingestion is connected.</p>
                         <p>Open the API docs at <a href="/api/docs">/api/docs</a>.</p>
                         <p>The frontend bundle was not found at <code>frontend/dist</code> yet.</p>
                     </div>
